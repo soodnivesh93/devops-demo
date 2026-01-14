@@ -1,2 +1,3 @@
-#!/bin/bash
-echo "Hello from Jenkins CI/CD pipeline"
+#!/bin/sh
+echo "Hello from FULL CI/CD Pipeline 🚀"
+
