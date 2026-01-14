@@ -1,58 +1,45 @@
 pipeline {
-    agent any
+  agent any
 
-    environment {
-        IMAGE_NAME = "devops-demo-app"
-        CONTAINER_NAME = "devops-demo-container"
+  stages {
+
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
     }
 
-    stages {
-
-        stage('Checkout') {
-            steps {
-                echo 'Checking out code'
-            }
-        }
-
-        stage('Build') {
-            steps {
-                echo 'Building application'
-            }
-        }
-
-        stage('Test') {
-            steps {
-                echo 'Running tests'
-                sh '''
-                  echo "Simulated test passed"
-                '''
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                sh '''
-                  docker build -t $IMAGE_NAME .
-                '''
-            }
-        }
-
-        stage('Deploy (Run Container)') {
-            steps {
-                sh '''
-                  docker rm -f $CONTAINER_NAME || true
-                  docker run -d --name $CONTAINER_NAME $IMAGE_NAME
-                '''
-            }
-        }
+    stage('Build') {
+      steps {
+        sh 'echo Building app'
+      }
     }
 
-    post {
-        success {
-            echo 'FULL CI/CD PIPELINE SUCCESSFUL 🎉'
-        }
-        failure {
-            echo 'PIPELINE FAILED ❌'
-        }
+    stage('Test') {
+      steps {
+        sh 'echo Tests passed'
+      }
     }
+
+    stage('Build Docker Image') {
+      steps {
+        sh '''
+          docker build -t soodnivesh93/devops-demo:${BUILD_NUMBER} .
+          docker push soodnivesh93/devops-demo:${BUILD_NUMBER}
+        '''
+      }
+    }
+
+    stage('Update Helm Values') {
+      steps {
+        sh '''
+          git clone https://github.com/soodnivesh93/devops-demo-helm.git
+          cd devops-demo-helm/charts/devops-demo
+          sed -i "s/tag:.*/tag: ${BUILD_NUMBER}/" values.yaml
+          git commit -am "Update image to ${BUILD_NUMBER}"
+          git push origin main
+        '''
+      }
+    }
+  }
 }
