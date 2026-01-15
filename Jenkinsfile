@@ -58,17 +58,20 @@ pipeline {
         )]) {
           sh '''
             rm -rf devops-demo-helm
-            git clone https://${GIT_USER}:${GIT_PASS}@github.com/soodnivesh93/devops-demo-helm.git
-            cd devops-demo-helm/charts/devops-demo
-
-            sed -i "s/^  tag:.*/  tag: \\"${IMAGE_TAG}\\"/" values.yaml
 
             git config user.email "jenkins@local"
             git config user.name "jenkins"
 
+            git clone https://github.com/soodnivesh93/devops-demo-helm.git
+            cd devops-demo-helm/charts/devops-demo
+
+            sed -i "s/^  tag:.*/  tag: \\"${IMAGE_TAG}\\"/" values.yaml
+
+            
+
             git add values.yaml
             git commit -m "Update image tag to ${IMAGE_TAG}"
-            git push origin main
+            git push https://${GIT_USER}:${GIT_PASS}@github.com/soodnivesh93/devops-demo-helm.git main
           '''
         }
       }
