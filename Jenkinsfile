@@ -77,7 +77,7 @@ pipeline {
 
             git add values.yaml
             git commit -m "Update image tag to ${IMAGE_TAG}"
-            git push https://$GIT_USER:$GIT_PASS@github.com/soodnivesh93/devops-demo-helm.git main
+            git push origin main
           '''
         }
       }
