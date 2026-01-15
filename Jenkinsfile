@@ -56,7 +56,7 @@ pipeline {
           usernameVariable: 'GIT_USER',
           passwordVariable: 'GIT_PASS'
         )]) {
-          sh '''
+          sh """
             rm -rf devops-demo-helm
 
             git config --global user.email "jenkins@local"
@@ -72,7 +72,7 @@ pipeline {
             git add values.yaml
             git commit -m "Update image tag to ${IMAGE_TAG}"
             git push https://${GIT_USER}:${GIT_PASS}@github.com/soodnivesh93/devops-demo-helm.git main
-          '''
+          """
         }
       }
     }
