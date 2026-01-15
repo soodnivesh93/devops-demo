@@ -57,12 +57,18 @@ pipeline {
           passwordVariable: 'GIT_PASS'
         )]) {
           sh '''
+            set -e
+
             rm -rf devops-demo-helm
 
             git config --global user.email "jenkins@local"
             git config --global user.name "jenkins"
 
-            git clone https://$GIT_USER:$GIT_PASS@github.com/soodnivesh93/devops-demo-helm.git
+            # Configure Git to use credentials securely
+            git config --global credential.helper store
+            echo "https://${GIT_USER}:${GIT_PASS}@github.com" > ~/.git-credentials
+
+            git clone https://github.com/soodnivesh93/devops-demo-helm.git
             cd devops-demo-helm/devops-demo/
 
             sed -i "s/^  tag:.*/  tag: \\"${IMAGE_TAG}\\"/" values.yaml
