@@ -1,6 +1,10 @@
-
 pipeline {
   agent any
+
+  environment {
+    IMAGE_NAME = "soodnivesh93/devops-demo"
+    IMAGE_TAG  = "${BUILD_NUMBER}"
+  }
 
   stages {
 
@@ -25,22 +29,58 @@ pipeline {
     stage('Build Docker Image') {
       steps {
         sh '''
-          docker build -t soodnivesh93/devops-demo:${BUILD_NUMBER} .
-          docker push soodnivesh93/devops-demo:${BUILD_NUMBER}
+          docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
         '''
+      }
+    }
+
+    stage('Docker Login & Push') {
+      steps {
+        withCredentials([usernamePassword(
+          credentialsId: 'dockerhub-creds',
+          usernameVariable: 'DOCKER_USER',
+          passwordVariable: 'DOCKER_PASS'
+        )]) {
+          sh '''
+            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+            docker push ${IMAGE_NAME}:${IMAGE_TAG}
+          '''
+        }
       }
     }
 
     stage('Update Helm Values') {
       steps {
-        sh '''
-          git clone https://github.com/soodnivesh93/devops-demo-helm.git
-          cd devops-demo-helm/charts/devops-demo
-          sed -i "s/tag:.*/tag: ${BUILD_NUMBER}/" values.yaml
-          git commit -am "Update image to ${BUILD_NUMBER}"
-          git push origin main
-        '''
+        withCredentials([usernamePassword(
+          credentialsId: 'github-creds',
+          usernameVariable: 'GIT_USER',
+          passwordVariable: 'GIT_PASS'
+        )]) {
+          sh '''
+            rm -rf devops-demo-helm
+            git clone https://${GIT_USER}:${GIT_PASS}@github.com/soodnivesh93/devops-demo-helm.git
+            cd devops-demo-helm/charts/devops-demo
+
+            sed -i "s/^  tag:.*/  tag: \\"${IMAGE_TAG}\\"/" values.yaml
+
+            git config user.email "jenkins@local"
+            git config user.name "jenkins"
+
+            git add values.yaml
+            git commit -m "Update image tag to ${IMAGE_TAG}"
+            git push origin main
+          '''
+        }
       }
+    }
+  }
+
+  post {
+    success {
+      echo "✅ CI pipeline successful. Image ${IMAGE_NAME}:${IMAGE_TAG} pushed & Helm updated."
+    }
+    failure {
+      echo "❌ Pipeline failed."
     }
   }
 }
