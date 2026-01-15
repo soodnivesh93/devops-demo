@@ -59,8 +59,8 @@ pipeline {
           sh '''
             rm -rf devops-demo-helm
 
-            git config user.email "jenkins@local"
-            git config user.name "jenkins"
+            git config --global user.email "jenkins@local"
+            git config --global user.name "jenkins"
 
             git clone https://github.com/soodnivesh93/devops-demo-helm.git
             cd devops-demo-helm/devops-demo/
